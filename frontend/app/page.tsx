@@ -1,3 +1,7 @@
+"use client";
+
+import { useState } from "react";
+
 const navigation = [
   { icon: "◫", label: "Overview", active: true },
   { icon: "⌘", label: "Services", active: false },
@@ -7,7 +11,75 @@ const navigation = [
   { icon: "◇", label: "Resilience", active: false },
 ];
 
+type ServiceStatus = "Healthy" | "Degraded" | "Failed";
+
+type Service = {
+  id: string;
+  name: string;
+  endpoint: string;
+  type: string;
+  status: ServiceStatus;
+  latency: number;
+  dependencies: string[];
+};
+
+const initialServices: Service[] = [
+  {
+    id: "gateway",
+    name: "API Gateway",
+    endpoint: "gateway:8080",
+    type: "Entry point",
+    status: "Healthy",
+    latency: 12,
+    dependencies: ["payments"],
+  },
+  {
+    id: "payments",
+    name: "Payment Service",
+    endpoint: "payments:8081",
+    type: "Application service",
+    status: "Healthy",
+    latency: 84,
+    dependencies: ["database"],
+  },
+  {
+    id: "database",
+    name: "Primary Database",
+    endpoint: "postgres:5432",
+    type: "Database",
+    status: "Healthy",
+    latency: 8,
+    dependencies: [],
+  },
+];
+
 export default function Home() {
+  const [services, setServices] = useState<Service[]>(initialServices);
+  const [selectedServiceId, setSelectedServiceId] = useState("gateway");
+
+  const selectedService =
+    services.find((service) => service.id === selectedServiceId) ??
+    services[0];
+
+  const serviceNodeClasses = (serviceId: string) =>
+    `service-node ${
+      selectedServiceId === serviceId ? "service-node-selected" : ""
+    }`;
+
+  const getDependencyNames = (service: Service) => {
+    if (service.dependencies.length === 0) {
+      return "No downstream dependencies";
+    }
+
+    return service.dependencies
+      .map(
+        (dependencyId) =>
+          services.find((item) => item.id === dependencyId)?.name ??
+          dependencyId
+      )
+      .join(", ");
+  };
+
   return (
     <main className="dashboard">
       {/* Sidebar */}
@@ -42,6 +114,7 @@ export default function Home() {
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
+
               {item.label === "Chaos Lab" && (
                 <span className="nav-badge">NEW</span>
               )}
@@ -84,93 +157,106 @@ export default function Home() {
               DEMO MODE
             </span>
 
-            <button className="icon-button" aria-label="Notifications">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label="Notifications"
+            >
               ♧
             </button>
 
-            <button className="help-button">Help ↗</button>
+            <button type="button" className="help-button">
+              Help ↗
+            </button>
           </div>
         </header>
 
         <div className="page-content">
-          <div className="hero">
-  <div className="hero-copy">
-    <div className="eyebrow">
-      <span className="eyebrow-line" />
-      CHAOS ENGINEERING, REIMAGINED
-    </div>
+          {/* Hero */}
+          <section className="hero">
+            <div className="hero-copy">
+              <div className="eyebrow">
+                <span className="eyebrow-line" />
+                CHAOS ENGINEERING, REIMAGINED
+              </div>
 
-    <h1 className="hero-title">
-      Break things.
-      <br />
-      <span>Build resilience.</span>
-    </h1>
+              <h1 className="hero-title">
+                Break things.
+                <br />
+                <span>Build resilience.</span>
+              </h1>
 
-    <p className="page-description hero-description">
-      Your architecture will fail eventually.
-      <br className="hero-line-break" />
-      Discover how it behaves before production finds out.
-    </p>
+              <p className="page-description hero-description">
+                Your architecture will fail eventually.
+                <br className="hero-line-break" />
+                Discover how it behaves before production finds out.
+              </p>
 
-    <div className="hero-actions">
-      <a className="primary-button hero-primary" href="#chaos-lab">
-        <span className="hero-button-icon">⚡</span>
-        Run an experiment
-        <span className="hero-button-arrow">↗</span>
-      </a>
+              <div className="hero-actions">
+                <a
+                  className="primary-button hero-primary"
+                  href="/chaos-lab"
+                >
+                  <span className="hero-button-icon">⚡</span>
+                  Run an experiment
+                  <span className="hero-button-arrow">↗</span>
+                </a>
 
-      <a className="secondary-button" href="#service-topology">
-        Explore architecture <span>↓</span>
-      </a>
-    </div>
+                <a
+                  className="secondary-button"
+                  href="#service-topology"
+                >
+                  Explore architecture <span>↓</span>
+                </a>
+              </div>
 
-    <div className="hero-footnote">
-      <span className="hero-footnote-dot" />
-      SAFE SANDBOX
-      <span className="hero-footnote-divider">/</span>
-      CONTROLLED FAILURE
-      <span className="hero-footnote-divider">/</span>
-      SAMPLE ENVIRONMENT
-    </div>
-  </div>
+              <div className="hero-footnote">
+                <span className="hero-footnote-dot" />
+                SAFE SANDBOX
+                <span className="hero-footnote-divider">/</span>
+                CONTROLLED FAILURE
+                <span className="hero-footnote-divider">/</span>
+                SAMPLE ENVIRONMENT
+              </div>
+            </div>
 
-  <div className="hero-visual" aria-hidden="true">
-    <div className="hero-orbit orbit-one" />
-    <div className="hero-orbit orbit-two" />
-    <div className="hero-orbit orbit-three" />
+            <div className="hero-visual" aria-hidden="true">
+              <div className="hero-orbit orbit-one" />
+              <div className="hero-orbit orbit-two" />
+              <div className="hero-orbit orbit-three" />
 
-    <div className="hero-core-glow" />
+              <div className="hero-core-glow" />
 
-    <div className="hero-core">
-      <span className="hero-core-symbol">✳</span>
-    </div>
+              <div className="hero-core">
+                <span className="hero-core-symbol">✳</span>
+              </div>
 
-    <span className="hero-node hero-node-one">
-      <span />
-      API
-    </span>
+              <span className="hero-node hero-node-one">
+                <span />
+                API
+              </span>
 
-    <span className="hero-node hero-node-two">
-      <span />
-      PAYMENTS
-    </span>
+              <span className="hero-node hero-node-two">
+                <span />
+                PAYMENTS
+              </span>
 
-    <span className="hero-node hero-node-three">
-      <span />
-      DATABASE
-    </span>
+              <span className="hero-node hero-node-three">
+                <span />
+                DATABASE
+              </span>
 
-    <span className="hero-signal signal-one">12 ms</span>
-    <span className="hero-signal signal-two">99.6%</span>
+              <span className="hero-signal signal-one">12 ms</span>
+              <span className="hero-signal signal-two">99.6%</span>
 
-    <div className="hero-visual-caption">
-      <span className="hero-caption-indicator" />
-      SYSTEM MODEL
-      <span className="hero-caption-separator">·</span>
-      03 NODES
-    </div>
-  </div>
-</div>
+              <div className="hero-visual-caption">
+                <span className="hero-caption-indicator" />
+                SYSTEM MODEL
+                <span className="hero-caption-separator">·</span>
+                03 NODES
+              </div>
+            </div>
+          </section>
 
           {/* System status */}
           <section className="system-banner">
@@ -196,13 +282,14 @@ export default function Home() {
                 <h2>At a glance</h2>
                 <p>Key signals from your sample environment</p>
               </div>
+
               <span className="sample-label">SAMPLE DATA</span>
             </div>
 
             <div className="metrics-grid">
               <MetricCard
                 label="Services"
-                value="03"
+                value={String(services.length).padStart(2, "0")}
                 detail="Registered services"
                 icon="◇"
                 accent="orange"
@@ -245,22 +332,39 @@ export default function Home() {
                   <h2>Service topology</h2>
                   <p>How your services communicate</p>
                 </div>
-                <button className="text-button">Explore →</button>
+
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => setSelectedServiceId("gateway")}
+                >
+                  Reset selection →
+                </button>
               </div>
 
               <div className="topology-canvas">
                 <div className="topology-glow" />
 
-                <div className="service-node">
-                  <div className="service-icon gateway-icon">⇄</div>
-                  <div className="service-copy">
+                {/* API Gateway */}
+                <button
+                  type="button"
+                  className={serviceNodeClasses("gateway")}
+                  onClick={() => setSelectedServiceId("gateway")}
+                  aria-pressed={selectedServiceId === "gateway"}
+                  aria-label="Select API Gateway"
+                >
+                  <span className="service-icon gateway-icon">⇄</span>
+
+                  <span className="service-copy">
                     <strong>API Gateway</strong>
                     <span>gateway:8080</span>
-                  </div>
-                  <span className="service-status">
-                    <span /> Healthy
                   </span>
-                </div>
+
+                  <span className="service-status">
+                    <span />
+                    Healthy
+                  </span>
+                </button>
 
                 <div className="connection">
                   <span className="connection-line" />
@@ -268,16 +372,26 @@ export default function Home() {
                   <span className="connection-arrow">↓</span>
                 </div>
 
-                <div className="service-node">
-                  <div className="service-icon payment-icon">₹</div>
-                  <div className="service-copy">
+                {/* Payment Service */}
+                <button
+                  type="button"
+                  className={serviceNodeClasses("payments")}
+                  onClick={() => setSelectedServiceId("payments")}
+                  aria-pressed={selectedServiceId === "payments"}
+                  aria-label="Select Payment Service"
+                >
+                  <span className="service-icon payment-icon">₹</span>
+
+                  <span className="service-copy">
                     <strong>Payment Service</strong>
                     <span>payments:8081</span>
-                  </div>
-                  <span className="service-status">
-                    <span /> Healthy
                   </span>
-                </div>
+
+                  <span className="service-status">
+                    <span />
+                    Healthy
+                  </span>
+                </button>
 
                 <div className="connection">
                   <span className="connection-line" />
@@ -285,39 +399,102 @@ export default function Home() {
                   <span className="connection-arrow">↓</span>
                 </div>
 
-                <div className="service-node">
-                  <div className="service-icon database-icon">▤</div>
-                  <div className="service-copy">
+                {/* Primary Database */}
+                <button
+                  type="button"
+                  className={serviceNodeClasses("database")}
+                  onClick={() => setSelectedServiceId("database")}
+                  aria-pressed={selectedServiceId === "database"}
+                  aria-label="Select Primary Database"
+                >
+                  <span className="service-icon database-icon">▤</span>
+
+                  <span className="service-copy">
                     <strong>Primary Database</strong>
                     <span>postgres:5432</span>
-                  </div>
-                  <span className="service-status">
-                    <span /> Healthy
                   </span>
+
+                  <span className="service-status">
+                    <span />
+                    Healthy
+                  </span>
+                </button>
+              </div>
+
+              {/* Selected service details */}
+              <div className="selected-service-panel" aria-live="polite">
+                <div className="selected-service-heading">
+                  <div>
+                    <span className="selected-service-eyebrow">
+                      SELECTED SERVICE
+                    </span>
+
+                    <h3>{selectedService.name}</h3>
+                  </div>
+
+                  <span
+                    className={`selected-service-status status-${selectedService.status.toLowerCase()}`}
+                  >
+                    <span />
+                    {selectedService.status}
+                  </span>
+                </div>
+
+                <div className="selected-service-details">
+                  <div>
+                    <span>Endpoint</span>
+                    <strong>{selectedService.endpoint}</strong>
+                  </div>
+
+                  <div>
+                    <span>Service type</span>
+                    <strong>{selectedService.type}</strong>
+                  </div>
+
+                  <div>
+                    <span>Latency</span>
+                    <strong>{selectedService.latency} ms</strong>
+                  </div>
+
+                  <div>
+                    <span>Dependencies</span>
+                    <strong>
+                      {getDependencyNames(selectedService)}
+                    </strong>
+                  </div>
                 </div>
               </div>
 
               <div className="topology-footer">
                 <span>
                   <span className="legend-dot" />
-                  3 services
+                  {services.length} services
                 </span>
+
                 <span>
                   <span className="legend-line" />
-                  2 connections
+                  {services.reduce(
+                    (total, service) =>
+                      total + service.dependencies.length,
+                    0
+                  )}{" "}
+                  connections
                 </span>
+
                 <span className="topology-footer-note">
                   Illustrative architecture
                 </span>
               </div>
             </div>
 
+            {/* Recent activity */}
             <div className="panel activity-panel">
               <div className="panel-heading">
                 <div>
                   <h2>Recent activity</h2>
                   <p>Latest events in your workspace</p>
                 </div>
+
                 <span className="activity-count">03</span>
               </div>
 
@@ -360,20 +537,31 @@ export default function Home() {
 
             <div className="cta-copy">
               <span className="cta-eyebrow">READY TO BREAK THINGS?</span>
+
               <h2>Healthy systems are only half the story.</h2>
+
               <p>
                 Introduce controlled failures and discover how your
                 architecture responds.
               </p>
             </div>
 
-            <button className="primary-button cta-button">
+            <button
+              type="button"
+              className="primary-button cta-button"
+              onClick={() => {
+                document
+                  .getElementById("service-topology")
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
               Enter Chaos Lab <span>↗</span>
             </button>
           </section>
 
           <footer className="page-footer">
             <span>ChaosLab · Grevix AfterCode</span>
+
             <span>
               <span className="footer-dot" />
               Demonstration environment
